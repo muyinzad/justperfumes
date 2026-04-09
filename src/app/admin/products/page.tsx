@@ -39,7 +39,7 @@ export default function AdminProducts() {
   }
 
   const openCreate = () => { setEditProduct(null); setForm({ name: '', brand: '', size: '', price: '', description: '', imageUrl: '', stock: '0', categoryId: '', active: true }); setShowModal(true) }
-  const openEdit = (p: Product) => { setEditProduct(p); setForm({ name: p.name, brand: p.brand, size: p.size, price: String(p.price), description: p.description || '', imageUrl: p.imageUrl || '', stock: String(p.stock), categoryId: p.categoryId || '', active: p.active }); setShowModal(true) }
+  const openEdit = (p: Product) => { setEditProduct(p); setForm({ name: p.name, brand: p.brand, size: p.size, price: String(p.price), description: p.description || '', imageUrl: p.imageUrl || '', stock: String(p.stock), categoryId: (p.category as {id:string}|null)?.id || '', active: p.active }); setShowModal(true) }
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
