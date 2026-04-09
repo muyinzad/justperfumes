@@ -153,10 +153,10 @@ export default function AdminProducts() {
                 <div key={key}>
                   <label className="block text-sm text-text-secondary mb-1">{label}</label>
                   {key === 'description' ? (
-                    <textarea value={(form as Record<string, string>)[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder} rows={3}
+                    <textarea value={String((form as Record<string, unknown>)[key])} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder} rows={3}
                       className="w-full px-4 py-2.5 bg-bg-tertiary border border-border rounded-lg text-text-primary text-sm placeholder:text-text-secondary focus:outline-none focus:border-accent-gold resize-none" />
                   ) : (
-                    <input type={type || 'text'} value={(form as Record<string, string>)[key]} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder}
+                    <input type={type || 'text'} value={String((form as Record<string, unknown>)[key])} onChange={e => setForm({ ...form, [key]: e.target.value })} placeholder={placeholder}
                       className="w-full px-4 py-2.5 bg-bg-tertiary border border-border rounded-lg text-text-primary text-sm placeholder:text-text-secondary focus:outline-none focus:border-accent-gold" />
                   )}
                 </div>
