@@ -2,7 +2,7 @@ module.exports = {
   apps: [{
     name: 'justperfumes',
     script: 'node_modules/next/dist/bin/next',
-    args: 'start -p 3000',
+    args: 'start -p 3004',
     cwd: '/var/www/justperfumes',
     instances: 1,
     exec_mode: 'fork',
