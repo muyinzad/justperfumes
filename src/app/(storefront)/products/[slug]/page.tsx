@@ -1,11 +1,11 @@
+import Link from "next/link"
 import Navbar from '@/components/layout/Navbar'
 import Footer from '@/components/layout/Footer'
 import ProductCard from '@/components/product/ProductCard'
 import { prisma } from '@/lib/prisma'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
-import { ShoppingBag, MessageCircle, Check } from 'lucide-react'
-import { useCart } from '@/hooks/useCart'
+import { MessageCircle, Check } from 'lucide-react'
 import AddToCartButton from '@/components/product/AddToCartButton'
 
 async function getProduct(slug: string) {
@@ -149,6 +149,3 @@ export default async function ProductPage({ params }: { params: { slug: string }
   )
 }
 
-function Link({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
-  return <a href={href} className={className}>{children}</a>
-}
