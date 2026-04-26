@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { generateOrderNumber } from '@/lib/utils'
+import { notifyAdminNewOrder } from '@/lib/whatsapp-notify'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
@@ -68,6 +69,20 @@ export async function POST(req: NextRequest) {
         items: { include: { product: true } },
       },
     })
+
+    try {
+      await notifyAdminNewOrder({
+        orderNumber: order.orderNumber,
+        customerName: dbCustomer.name,
+        customerPhone: dbCustomer.phone,
+        items: order.items.map(i => ({ name: i.product.name, quantity: i.quantity, priceAt: i.priceAt })),
+        total: order.total,
+        notes: order.notes,
+      })
+    } catch (notifyErr) {
+      console.error('[Order] Notification failed:', notifyErr)
+      // Don't fail the order creation if notification fails
+    }
 
     return NextResponse.json(order, { status: 201 })
   } catch (err) {
