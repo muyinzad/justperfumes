@@ -1,9 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/utils'
+import { getCached, setCached, delCached } from '@/lib/cache'
+
+const LIST_TTL = 60 // 1 minute
+const PRODUCT_TTL = 300 // 5 minutes
+
+function listCacheKey(params: URLSearchParams): string {
+  const parts: string[] = []
+  for (const [k, v] of params) {
+    if (v) parts.push(`${k}=${v}`)
+  }
+  return 'products:list:' + parts.join('&')
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
+  const cacheKey = listCacheKey(searchParams)
+
+  // Try cache first
+  const cached = await getCached(cacheKey)
+  if (cached) {
+    return NextResponse.json(JSON.parse(cached), {
+      headers: { 'X-Cache': 'HIT' }
+    })
+  }
+
   const page = parseInt(searchParams.get('page') || '1')
   const perPage = parseInt(searchParams.get('perPage') || '24')
   const q = searchParams.get('q')
@@ -42,7 +64,14 @@ export async function GET(req: NextRequest) {
     prisma.product.count({ where }),
   ])
 
-  return NextResponse.json({ products, total, page, perPage, totalPages: Math.ceil(total / perPage) })
+  const result = { products, total, page, perPage, totalPages: Math.ceil(total / perPage) }
+
+  // Cache the result
+  await setCached(cacheKey, JSON.stringify(result), LIST_TTL)
+
+  return NextResponse.json(result, {
+    headers: { 'X-Cache': 'MISS' }
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -69,6 +98,9 @@ export async function POST(req: NextRequest) {
         slug: finalSlug,
       },
     })
+
+    // Invalidate list caches
+    await delCached('products:list:*')
 
     return NextResponse.json(product, { status: 201 })
   } catch (err) {

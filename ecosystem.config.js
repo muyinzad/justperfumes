@@ -4,8 +4,8 @@ module.exports = {
     script: 'node_modules/next/dist/bin/next',
     args: 'start -p 3004',
     cwd: '/var/www/justperfumes',
-    instances: 1,
-    exec_mode: 'fork',
+    instances: 2,
+    exec_mode: 'cluster',
     env: {
       NODE_ENV: 'production',
       PORT: 3004,
@@ -13,5 +13,7 @@ module.exports = {
     max_memory_restart: '500M',
     restart_delay: 4000,
     autorestart: true,
+    max_restarts: 10,
+    min_uptime: '10s',
   }],
 }

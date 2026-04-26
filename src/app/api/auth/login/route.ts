@@ -2,8 +2,32 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { signToken } from '@/lib/utils'
+import { rateLimit } from '@/lib/ratelimit'
 
 export async function POST(req: NextRequest) {
+  // Get client IP for rate limiting
+  const forwarded = req.headers.get('x-forwarded-for')
+  const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown'
+
+  // Rate limit: 5 attempts per 15 minutes per IP
+  const { success, limit, remaining, reset } = await rateLimit(ip, 5, 900)
+  if (!success) {
+    return NextResponse.json(
+      {
+        error: 'Too many login attempts. Please try again later.',
+        retryAfter: reset - Math.ceil(Date.now() / 1000),
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(reset - Math.ceil(Date.now() / 1000)),
+          'X-RateLimit-Limit': String(limit),
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    )
+  }
+
   try {
     const { email, password } = await req.json()
 
