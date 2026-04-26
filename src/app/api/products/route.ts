@@ -9,7 +9,7 @@ const PRODUCT_TTL = 300 // 5 minutes
 function listCacheKey(params: URLSearchParams): string {
   const parts: string[] = []
   for (const [k, v] of params) {
-    if (v) parts.push(`${k}=${v}`)
+    if (v) parts.push(k + '=' + v)
   }
   return 'products:list:' + parts.join('&')
 }
@@ -83,26 +83,23 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const slug = slugify(`${name}-${size}`)
-    const existing = await prisma.product.findUnique({ where: { slug } })
-    const finalSlug = existing ? `${slug}-${Date.now()}` : slug
-
-    const product = await prisma.product.create({
-      data: {
-        name, brand, size, price,
-        description: description || null,
-        imageUrl: imageUrl || null,
-        sourceUrl: sourceUrl || null,
-        categoryId: categoryId || null,
-        stock: stock || 0,
-        slug: finalSlug,
-      },
-    })
-
-    // Invalidate list caches
-    await delCached('products:list:*')
-
-    return NextResponse.json(product, { status: 201 })
+    let slug = slugify(name + '-' + size)
+    let attempts = 0
+    while (attempts < 3) {
+      try {
+        const product = await prisma.product.create({
+          data: { name, brand, size, price, description: description || null, imageUrl: imageUrl || null, sourceUrl: sourceUrl || null, categoryId: categoryId || null, stock: stock || 0, slug },
+        })
+        return NextResponse.json(product, { status: 201 })
+      } catch (err: any) {
+        if (err.code === 'P2002' && attempts < 2) {
+          slug = slugify(name + '-' + size + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7))
+          attempts++
+        } else {
+          throw err
+        }
+      }
+    }
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to create product' }, { status: 500 })
